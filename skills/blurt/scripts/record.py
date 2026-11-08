@@ -33,6 +33,7 @@ import json
 import os
 import queue
 import re
+import shlex
 import shutil
 import signal
 import subprocess
@@ -656,6 +657,8 @@ def swift_build(scratch: Path, triple: str | None = None) -> Path | None:
            "--product", "blurt-recorder"]
     if test_hooks():  # a build for tests: the app honours BLURT_TEST_* (main.swift); every other build ignores them
         cmd += ["-Xswiftc", "-DBLURT_TEST_HOOKS"]
+    if flags := shlex.split(os.environ.get("BLURT_SWIFT_FLAGS", "")):  # e.g. a non-Apple toolchain's workaround flags
+        cmd += flags
     if triple:
         cmd += ["--triple", triple]
     r = run(cmd, check=False)
