@@ -73,6 +73,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
     var bundlePanel: NSSavePanel?
     /// A hand-off bundle is being packed: the action is off until it is done (one at a time).
     private(set) var bundling = false
+    /// A Feishu export is on its way (rows and their attachments, minutes): the action is off until it is done.
+    private(set) var exportingFeishu = false
 
     init() {
         sidebar = SidebarController(model: model)
@@ -1246,6 +1248,43 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
     @objc func mCopyInstruction() { handOff(uids: list.selectedItems.map(\.uid), what: "instruction") { _ in } }
     @objc func mCopyFull() { handOff(uids: list.selectedItems.map(\.uid), what: "full") { _ in } }
     @objc func mExportBundle() { exportBundle(uids: list.selectedItems.map(\.uid)) }
+    @objc func mExportFeishu() { exportFeishu(items: list.selectedItems) }
+
+    /// Export to Feishu: the selected items as rows in the team's bug table (feishu_export.py, config export.feishu —
+    /// the menu only offers it once that is set up). Read-only for this app: no item's state changes. One call per
+    /// project the selection spans; while it runs (attachments upload one at a time: minutes) the island says so and
+    /// the action is off, then the toast says how many landed — an alert, every reason, when none did.
+    func exportFeishu(items: [ItemRow]) {
+        let items = items.filter { !$0.itemID.isEmpty && !$0.readOnly }
+        guard !items.isEmpty, Scripts.feishuExportReady, !exportingFeishu else { return NSSound.beep() }
+        exportingFeishu = true
+        let groups = Dictionary(grouping: items, by: \.projectID).map { (project: $0.key, ids: $0.value.map(\.itemID)) }
+        emit(["event": "feishu_export", "items": items.count, "projects": groups.count])
+        let exporting = T("main.export_feishu.exporting", TP("main.items.count", items.count))
+        if let island = AppEnvironment.island {
+            island.toast(exporting, key: "feishu", icon: nil, seconds: 600, actionTitle: nil, action: nil)
+        } else {
+            window?.subtitle = exporting
+        }
+        Scripts.feishuExport(groups) { [weak self] results in
+            guard let self else { return }
+            self.exportingFeishu = false
+            if AppEnvironment.island == nil { self.updateTitle() }
+            let ok = results.filter { ($0["ok"] as? Bool) == true }.count
+            let bad = results.filter { ($0["ok"] as? Bool) != true }
+            emit(["event": "feishu_exported", "items": ok, "failed": bad.count])
+            if bad.isEmpty {
+                AppEnvironment.island?.dropToasts(key: "feishu")
+                appDelegate?.toast(T("main.export_feishu.done", TP("main.items.count", ok)), icon: .check)
+            } else if ok > 0 {
+                AppEnvironment.island?.dropToasts(key: "feishu")
+                appDelegate?.toast(T("main.export_feishu.mixed", TP("main.items.count", ok), TP("main.items.count", bad.count)), icon: .x)
+            } else {
+                self.alert(T("main.export_feishu.failed"),
+                           bad.map { "\($0["id"] ?? "?"): \($0["error"] ?? "")" }.joined(separator: "\n"))
+            }
+        }
+    }
     /// The app's own sentence for a script's error code ("main.error.<code>"), nil when it has none.
     static func errorSentence(_ code: String) -> String? {
         let k = "main.error.\(code)"
@@ -1374,6 +1413,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSToolba
         m.addItem(.separator())
         m.addItem(submenu(T("menu.copy"), "doc.on.doc", copyMenu()))
         _ = add(m, T("main.menu.export_bundle"), #selector(mExportBundle), "archivebox")
+        if Scripts.feishuExportReady {   // the team's bug table is configured (feishu_export.py init): the PM's list
+            _ = add(m, T("main.menu.export_feishu"), #selector(mExportFeishu), "paperplane")
+        }
         m.addItem(.separator())
         _ = add(m, T("main.menu.quick_look"), #selector(mQuickLook), "eye", key: "y")
         _ = add(m, T("action.reveal_in_finder"), #selector(mReveal), "arrow.up.forward.app", key: "r", mods: [.command, .shift])

@@ -287,6 +287,11 @@
 "main.menu.copy_link" = "复制事项链接";
 "main.menu.enrich" = "用 AI 补全详情";
 "main.menu.export_bundle" = "导出交接包…";
+"main.menu.export_feishu" = "导出到飞书";
+"main.export_feishu.exporting" = "正在导出（%@）到飞书…";
+"main.export_feishu.done" = "已导出 %@ 到飞书";
+"main.export_feishu.mixed" = "已导出 %@，失败 %@";
+"main.export_feishu.failed" = "导出飞书失败";
 "main.bundle.save" = "导出";
 "main.bundle.message" = "一个 .zip 文件，包含概要、每个事项的详情和截图，可在其他电脑上打开。";
 "main.bundle.saved" = "交接包已保存：%@";

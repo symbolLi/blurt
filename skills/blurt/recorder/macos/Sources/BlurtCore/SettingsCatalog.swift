@@ -89,6 +89,8 @@ public enum SettingsCatalog {
         pane("speech", "settings.kit.speech", "Settings", "cpu", "preferences"),
         pane("shortcuts", "settings.kit.shortcuts", "Settings", "keyboard", "preferences"),
         pane("remote", "settings.kit.remote", "Settings", "iphone", "preferences"),
+        // the team's bug bitable the list's Export to Feishu writes — bound once per machine (Settings → Feishu)
+        pane("feishu", "settings.kit.feishu", "Settings", "tablecells", "preferences"),
         pane("projects", "main.sidebar.projects", "Main", "folder", "work"),
         pane("agents", "settings.kit.agents", "Settings", "paperplane", "work"),   // 交给 Agent's glyph: the wand is dictation polish
         pane("privacy", "settings.kit.privacy", "Settings", "hand.raised", "mac"),
@@ -162,6 +164,9 @@ public enum SettingsCatalog {
         sec("remote.phones", "settings.remote.section.phones"),
         sec("remote.options", "settings.remote.section.options"),
         sec("remote.relay", "settings.remote.section.relay"),
+
+        // Feishu: the app's own credentials + the bug bitable they write
+        sec("feishu.bind", "settings.feishu.section.bind"),
 
         sec("speech.use", "speech.section.mac", "Speech"),
         sec("speech.services", "models.section.services", "Models"),
@@ -290,6 +295,13 @@ public enum SettingsCatalog {
             row("remote.screen", "remote.options", "settings.remote.screen", detail: S("settings.remote.screen.detail")),
             row("remote.relay.address", "remote.relay", "settings.remote.relay", detail: S("settings.remote.relay.address.detail")),
             row("remote.relay.help", "remote.relay", "settings.remote.relay.help", detail: S("settings.remote.relay.help.detail")),
+
+            // Feishu: the credentials, the table, the proposer — Bind checks them against the table and saves
+            row("feishu.app", "feishu.bind", "settings.feishu.app", detail: S("settings.feishu.app.detail")),
+            row("feishu.secret", "feishu.bind", "settings.feishu.secret", detail: S("settings.feishu.secret.detail")),
+            row("feishu.table", "feishu.bind", "settings.feishu.table", detail: S("settings.feishu.table.detail")),
+            row("feishu.owner", "feishu.bind", "settings.feishu.owner", detail: S("settings.feishu.owner.detail")),
+            row("feishu.bind", "feishu.bind", "settings.feishu.bind", detail: S("settings.feishu.bind.hint")),
 
             // Speech
         ]

@@ -117,6 +117,53 @@ enum Scripts {
         call("handoff.py", ["create", "--items"] + uids + ["--lang", Loc.isChinese ? "zh" : "en", "--to", "external", "--mark"], timeout: 30, done: done)
     }
 
+    /// feishu_export.py's rule (load_cfg): base_token + table_id under config export.feishu — its `init` subcommand
+    /// writes them. The list's Export to Feishu is offered only while this is true (nothing to configure, no button).
+    static var feishuExportReady: Bool {
+        let f = Config.shared["export.feishu"] as? [String: Any]
+        return !(f?["base_token"] as? String ?? "").isEmpty && !(f?["table_id"] as? String ?? "").isEmpty
+    }
+
+    /// feishu_export.py --project P --ids …, one call per project the selection spans: rows in the team's bitable.
+    /// `done` gets the merged per-item results whatever happened ({"ok", …} per item; a call that died becomes a
+    /// failed result per id, its error already a sentence). Attachments upload one at a time — 10 min the lot.
+    static func feishuExport(_ groups: [(project: String, ids: [String])], done: @escaping ([[String: Any]]) -> Void) {
+        var all: [[String: Any]] = []
+        func step(_ rest: [(project: String, ids: [String])]) {
+            guard let g = rest.first else { return done(all) }
+            run("feishu_export.py", ["--project", g.project, "--ids"] + g.ids, timeout: 600) { r in
+                switch r {
+                case .success(let d):
+                    if let rs = json(d)?["results"] as? [[String: Any]] {
+                        all += rs
+                    } else {
+                        all += g.ids.map { ["id": $0, "ok": false, "error": T("main.error.generic")] }
+                    }
+                case .failure(let e):
+                    all += g.ids.map { ["id": $0, "ok": false, "error": peopleText(e, context: "feishu_export")] }
+                }
+                step(Array(rest.dropFirst()))
+            }
+        }
+        step(groups)
+    }
+
+    /// feishu_export.py bind — the settings pane's one button: checks the app's own credentials against the table
+    /// and writes config export.feishu (what makes the list's Export to Feishu appear). The secret rides on stdin,
+    /// never the command line; an empty secret means "keep the saved one".
+    static func feishuBind(appKey: String, secret: String, table: String, owner: String,
+                           done: @escaping ([String: Any]) -> Void) {
+        var args = ["bind", "--app-key", appKey]
+        if !table.isEmpty { args += ["--table", table] }
+        if !owner.isEmpty { args += ["--owner", owner] }
+        call("feishu_export.py", args, stdin: Data((secret + "\n").utf8), timeout: 90) { r in
+            switch r {
+            case .success(let o): done(o)               // {"ok": true, "table": …, "proposer": …}
+            case .failure(let e): done(["ok": false, "error": peopleText(e, context: "feishu_bind")])
+            }
+        }
+    }
+
     /// Debounced, coalescing `index.py update <paths>` for the FSEvents watcher.
     static var pendingUpdate = Set<String>()
     static var updating = false

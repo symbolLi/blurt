@@ -1803,7 +1803,8 @@ button.chip:hover {
   color: var(--faint);
   padding: 48px 0;
 }
-/* selection: a checkbox on the thumbnail (on hover, or always once something is selected) */
+/* selection: a checkbox on the thumbnail — faintly there at rest (so it can be found), full on hover, in a
+   selection, or focused; the thumbnail keeps reading as a picture, not a form */
 .pickbox {
   position: absolute;
   top: 8px;
@@ -1816,7 +1817,7 @@ button.chip:hover {
   background: rgba(0, 0, 0, 0.32);
   box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.85);
   color: #fff;
-  opacity: 0;
+  opacity: 0.45;
   transition: opacity 0.15s, background-color 0.15s;
 }
 .card:hover .pickbox,

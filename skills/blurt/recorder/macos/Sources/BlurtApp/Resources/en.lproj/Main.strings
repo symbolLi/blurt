@@ -287,6 +287,11 @@
 "main.menu.copy_link" = "Copy Item Link";
 "main.menu.enrich" = "Fill In Details with AI";
 "main.menu.export_bundle" = "Export Hand-off Bundle…";
+"main.menu.export_feishu" = "Export to Feishu";
+"main.export_feishu.exporting" = "Exporting %@ to Feishu…";
+"main.export_feishu.done" = "Exported %@ to Feishu";
+"main.export_feishu.mixed" = "Exported %@, failed %@";
+"main.export_feishu.failed" = "Export to Feishu failed";
 "main.bundle.save" = "Export";
 "main.bundle.message" = "One .zip with a summary, every item and its screenshots. It opens on any computer.";
 "main.bundle.saved" = "Hand-off bundle saved: %@";
